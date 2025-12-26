@@ -1,70 +1,125 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface AuthProps {
   onIdentity: (name: string) => void;
   currentIdentity?: string;
   onLogout: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const Auth: React.FC<AuthProps> = ({ onIdentity, currentIdentity, onLogout }) => {
-  const [isExpanding, setIsExpanding] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+const Auth: React.FC<AuthProps> = ({ onIdentity, currentIdentity, onLogout, isOpen, onClose }) => {
+  const [step, setStep] = useState<'id' | 'key'>('id');
+  const [idValue, setIdValue] = useState('');
+  const [keyValue, setKeyValue] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim()) {
-      onIdentity(inputValue.trim().toLowerCase());
-      setInputValue('');
-      setIsExpanding(false);
-    }
-  };
+  if (!isOpen && !currentIdentity) return null;
 
-  if (currentIdentity) {
+  if (currentIdentity && !isOpen) {
     return (
-      <div className="flex items-center space-x-3 mt-1">
-        <span className="text-white/60 text-[9px] tracking-[0.3em] uppercase font-bold">
-          Identity established: {currentIdentity}
+      <div className="flex items-center space-x-4 mt-2 animate-in fade-in duration-1000">
+        <span className="text-white/40 text-[9px] tracking-[0.4em] uppercase font-bold">
+          {currentIdentity}
         </span>
         <button 
           onClick={onLogout}
-          className="text-white/20 hover:text-white/50 text-[9px] tracking-[0.3em] uppercase transition-all duration-300 font-bold"
+          className="text-white/10 hover:text-white/40 text-[9px] tracking-[0.4em] uppercase transition-all duration-300 font-bold"
         >
-          [ Release ]
+          [ RELEASE ]
         </button>
       </div>
     );
   }
 
+  if (!isOpen) return null;
+
+  const handleSubmitId = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (idValue.trim()) {
+      // Simple check to simulate login vs signup
+      const existing = localStorage.getItem(`portal_history_${idValue.trim().toLowerCase()}`);
+      setIsLogin(!!existing);
+      setStep('key');
+    }
+  };
+
+  const handleSubmitKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (keyValue.trim()) {
+      onIdentity(idValue.trim().toLowerCase());
+      setIdValue('');
+      setKeyValue('');
+      setStep('id');
+      onClose();
+    }
+  };
+
   return (
-    <div className="flex items-center mt-1">
-      {!isExpanding ? (
+    <div className="fixed inset-0 bg-[#050505]/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+      <div className="w-full max-w-xs space-y-12">
+        <div className="space-y-2">
+          <h2 className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-bold text-center">
+            {step === 'id' ? 'Establish Identity' : (isLogin ? 'Resume Session' : 'Secure Identity')}
+          </h2>
+          <div className="h-[1px] w-full bg-white/5" />
+        </div>
+
+        {step === 'id' ? (
+          <form onSubmit={handleSubmitId} className="space-y-8">
+            <input
+              autoFocus
+              type="text"
+              placeholder="IDENTIFIER"
+              value={idValue}
+              onChange={(e) => setIdValue(e.target.value)}
+              className="w-full bg-transparent border-none text-center text-xl font-light tracking-widest text-white placeholder:text-white/5 focus:ring-0 font-mono"
+            />
+            <div className="flex justify-center">
+              <button 
+                type="submit"
+                className="text-[9px] uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmitKey} className="space-y-8">
+            <input
+              autoFocus
+              type="password"
+              placeholder="ACCESS KEY"
+              value={keyValue}
+              onChange={(e) => setKeyValue(e.target.value)}
+              className="w-full bg-transparent border-none text-center text-xl font-light tracking-widest text-white placeholder:text-white/5 focus:ring-0 font-mono"
+            />
+            <div className="flex justify-between items-center px-4">
+              <button 
+                type="button"
+                onClick={() => setStep('id')}
+                className="text-[9px] uppercase tracking-[0.4em] text-white/10 hover:text-white transition-colors"
+              >
+                Back
+              </button>
+              <button 
+                type="submit"
+                className="text-[9px] uppercase tracking-[0.4em] text-white/40 hover:text-white transition-colors"
+              >
+                Connect
+              </button>
+            </div>
+          </form>
+        )}
+
         <button 
-          onClick={() => setIsExpanding(true)}
-          className="text-white/40 hover:text-white text-[9px] tracking-[0.3em] uppercase transition-all duration-300 font-bold border-b border-white/5 pb-0.5"
+          onClick={onClose}
+          className="absolute top-12 right-12 text-white/10 hover:text-white text-[10px] tracking-[0.3em] uppercase font-bold transition-all"
         >
-          Connect Identity
+          Cancel
         </button>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex items-center animate-in fade-in slide-in-from-top-1 duration-500">
-          <input 
-            autoFocus
-            type="text"
-            placeholder="WHO ARE YOU?..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="bg-transparent border-none text-[9px] tracking-[0.3em] uppercase text-white placeholder-white/10 focus:ring-0 w-32 p-0 font-bold"
-          />
-          <button type="submit" className="hidden">Submit</button>
-          <button 
-            type="button"
-            onClick={() => setIsExpanding(false)}
-            className="ml-4 text-white/10 hover:text-white text-[9px] font-bold"
-          >
-            ESC
-          </button>
-        </form>
-      )}
+      </div>
     </div>
   );
 };

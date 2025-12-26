@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '../types';
 import { sendMessageToPortal } from '../services/geminiService';
@@ -14,6 +14,7 @@ interface ChatInterfaceProps {
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -25,19 +26,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
       const saved = localStorage.getItem(`${STORAGE_HISTORY_PREFIX}${userId}`);
       if (saved) {
         try {
-          setMessages(JSON.parse(saved));
+          const parsed: ChatMessage[] = JSON.parse(saved);
+          setMessages(parsed);
+          if (parsed.length > 0) {
+            setActiveMessageId(parsed[parsed.length - 1].id);
+          }
         } catch (e) {
           console.error("Failed to restore history", e);
         }
       } else {
-        setMessages([{
-          id: 'initial',
+        const initialId = 'initial';
+        const initialMsg: ChatMessage = {
+          id: initialId,
           role: 'assistant',
           text: "The connection is established. You are present."
-        }]);
+        };
+        setMessages([initialMsg]);
+        setActiveMessageId(initialId);
       }
     } else {
       setMessages([]);
+      setActiveMessageId(null);
     }
   }, [userId]);
 
@@ -48,14 +57,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
     }
   }, [messages, userId]);
 
-  // Reliable scroll to bottom
+  // Compute the active path from root to current anchor
+  const activePathIds = useMemo(() => {
+    if (!activeMessageId) return new Set<string>();
+    const path = new Set<string>();
+    let currentId: string | undefined = activeMessageId;
+    while (currentId) {
+      path.add(currentId);
+      const msg = messages.find(m => m.id === currentId);
+      currentId = msg?.parentId;
+    }
+    return path;
+  }, [activeMessageId, messages]);
+
+  // Construct conversation context for Gemini based on the active path
+  const getContextHistory = (currentActiveId: string | null) => {
+    if (!currentActiveId) return [];
+    const path: ChatMessage[] = [];
+    let currentId: string | undefined = currentActiveId;
+    while (currentId) {
+      const msg = messages.find(m => m.id === currentId);
+      if (msg) path.unshift(msg);
+      currentId = msg?.parentId;
+    }
+    return path.map(m => ({
+      role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
+      parts: [{ text: m.text }]
+    }));
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, activeMessageId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,40 +103,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
       return;
     }
 
+    const userMsgId = Date.now().toString();
     const userMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: userMsgId,
       role: 'user',
-      text: input.trim()
+      text: input.trim(),
+      parentId: activeMessageId || undefined
     };
 
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setActiveMessageId(userMsgId);
     setInput('');
     setIsLoading(true);
 
     try {
-      const history = newMessages.map(m => ({
-        role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
-        parts: [{ text: m.text }]
-      }));
-
+      const history = getContextHistory(userMsgId);
       const response = await sendMessageToPortal(userMessage.text, history);
       
+      const assistantMsgId = (Date.now() + 1).toString();
       const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: assistantMsgId,
         role: 'assistant',
         text: response.text || '',
-        cards: response.cards || []
+        cards: response.cards || [],
+        parentId: userMsgId
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      setActiveMessageId(assistantMsgId);
     } catch (error) {
       console.error("Portal flicker:", error);
+      const errorMsgId = Date.now().toString();
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: errorMsgId,
         role: 'assistant',
-        text: "The connection is tenuous. Your signal is weak."
+        text: "The connection is tenuous. Your signal is weak.",
+        parentId: userMsgId
       }]);
+      setActiveMessageId(errorMsgId);
     } finally {
       setIsLoading(false);
     }
@@ -107,34 +149,40 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
 
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto px-6">
-      {/* Dialogue Layer */}
       <div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto pt-48 md:pt-64 pb-12 no-scrollbar"
       >
         <div className="space-y-12">
-          {messages.map((m) => (
-            <div 
-              key={m.id} 
-              className={`flex flex-col animate-in fade-in duration-700 ${m.role === 'user' ? 'items-end' : 'items-start'}`}
-            >
-              <div className={`max-w-[90%] md:max-w-[80%] ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                <div className="prose prose-invert prose-sm font-light leading-relaxed text-white/80 selection:bg-white/10">
-                  <ReactMarkdown>{m.text}</ReactMarkdown>
-                </div>
-                
-                {m.cards && m.cards.length > 0 && (
-                  <div className="mt-8 space-y-4 w-full md:w-80">
-                    {m.cards.map((card, i) => (
-                      card.type === 'project' ? (
-                        <ProjectCard key={i} project={card.content} />
-                      ) : null
-                    ))}
+          {messages.map((m) => {
+            const isActive = activePathIds.has(m.id);
+            return (
+              <div 
+                key={m.id} 
+                onClick={() => setActiveMessageId(m.id)}
+                className={`flex flex-col transition-all duration-700 cursor-pointer group 
+                  ${m.role === 'user' ? 'items-end' : 'items-start'}
+                  ${isActive ? 'opacity-100' : 'opacity-10 hover:opacity-30'}
+                `}
+              >
+                <div className={`max-w-[90%] md:max-w-[80%] ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
+                  <div className="prose prose-invert prose-sm font-light leading-relaxed text-white/80 selection:bg-white/10">
+                    <ReactMarkdown>{m.text}</ReactMarkdown>
                   </div>
-                )}
+                  
+                  {isActive && m.cards && m.cards.length > 0 && (
+                    <div className="mt-8 space-y-4 w-full md:w-80">
+                      {m.cards.map((card, i) => (
+                        card.type === 'project' ? (
+                          <ProjectCard key={i} project={card.content} />
+                        ) : null
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           
           {isLoading && (
             <div className="flex items-center space-x-2 animate-pulse py-4">
@@ -148,7 +196,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
         </div>
       </div>
 
-      {/* Input Bridge */}
       <div className="bg-[#0A0A0A] pb-12 pt-4 relative z-10 border-t border-white/[0.03]">
         <form onSubmit={handleSubmit} className="relative group">
           <input

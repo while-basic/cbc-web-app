@@ -9,6 +9,7 @@ const IDENTITY_KEY = 'portal_current_identity';
 const App: React.FC = () => {
   const [showLaunch, setShowLaunch] = useState(true);
   const [userPresence, setUserPresence] = useState<string | undefined>(undefined);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   // Persistence of identity
   useEffect(() => {
@@ -21,11 +22,16 @@ const App: React.FC = () => {
   const handleIdentity = (name: string) => {
     setUserPresence(name);
     localStorage.setItem(IDENTITY_KEY, name);
+    setIsAuthOpen(false);
   };
 
   const handleLogout = () => {
     setUserPresence(undefined);
     localStorage.removeItem(IDENTITY_KEY);
+  };
+
+  const triggerAuth = () => {
+    setIsAuthOpen(true);
   };
 
   return (
@@ -34,7 +40,7 @@ const App: React.FC = () => {
         <LaunchScreen onStart={() => setShowLaunch(false)} />
       ) : (
         <div className="h-full relative flex flex-col overflow-hidden">
-          {/* Identity Anchor - Stacked and Centered as per screenshot */}
+          {/* Identity Anchor */}
           <header className="fixed top-0 left-0 right-0 pt-10 flex flex-col items-center pointer-events-none z-30 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/90 to-transparent pb-16">
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-white/95 animate-in fade-in duration-1000 mb-1">
               Christopher Celaya
@@ -45,7 +51,18 @@ const App: React.FC = () => {
                 <p>CLOS: Cognitive Life Operating System</p>
               </div>
               
+              {!userPresence && (
+                <button 
+                  onClick={triggerAuth}
+                  className="mt-2 text-white/40 hover:text-white text-[9px] tracking-[0.3em] uppercase transition-all duration-300 font-bold border-b border-white/5 pb-0.5"
+                >
+                  Connect Identity
+                </button>
+              )}
+
               <Auth 
+                isOpen={isAuthOpen}
+                onClose={() => setIsAuthOpen(false)}
                 currentIdentity={userPresence} 
                 onIdentity={handleIdentity} 
                 onLogout={handleLogout}
@@ -55,7 +72,7 @@ const App: React.FC = () => {
 
           {/* Core Content Layer */}
           <main className="flex-1 min-h-0 relative z-0">
-            <ChatInterface userId={userPresence} onConnectIdentity={handleIdentity} />
+            <ChatInterface userId={userPresence} onConnectIdentity={triggerAuth} />
           </main>
 
           {/* Minimalist Portal Status */}

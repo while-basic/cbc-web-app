@@ -40,4 +40,5 @@ export interface ChatMessage {
   text: string;
   cards?: CardData[];
   id: string;
+  parentId?: string;
 }
