@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //----------------------------------------------------------------------------
 //File:       MessageBubbleView.swift
 //Project:     cbc
@@ -8,6 +9,14 @@
 //License:     MIT
 //Last Update: November 2025
 //----------------------------------------------------------------------------
+=======
+//
+//  MessageBubbleView.swift
+//  cbc
+//
+//  Created by Christopher Celaya on 12/25/25.
+//
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
 
 import SwiftUI
 
@@ -17,6 +26,7 @@ struct MessageBubbleView: View {
     let onTap: () -> Void
 
     var body: some View {
+<<<<<<< HEAD
         VStack(alignment: message.isUser ? .trailing : .leading, spacing: 16) {
             // Message text
             HStack {
@@ -62,11 +72,27 @@ struct MessageBubbleView: View {
             // Project cards if any
             if isActive, let projects = message.projectCards, !projects.isEmpty {
                 LazyVStack(spacing: 12) {
+=======
+        VStack(alignment: message.isUser ? .trailing : .leading, spacing: 12) {
+            // Message text
+            Text(message.content)
+                .font(.body)
+                .foregroundColor(.white)
+                .padding(16)
+                .background(message.isUser ? Color(hex: "0066FF") : Color(hex: "1A1A1A"))
+                .cornerRadius(16)
+                .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
+
+            // Project cards if any
+            if isActive, let projects = message.projectCards, !projects.isEmpty {
+                LazyVStack(spacing: 16) {
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
                     ForEach(projects) { project in
                         ProjectCardView(project: project)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+<<<<<<< HEAD
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
@@ -81,6 +107,18 @@ struct MessageBubbleView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isActive)
         .drawingGroup()
+=======
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .opacity(isActive ? 1.0 : 0.1)
+        .onTapGesture {
+            onTap()
+        }
+        .animation(.easeInOut(duration: 0.7), value: isActive)
+        .drawingGroup() // Optimize rendering for complex views
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
     }
 }
 

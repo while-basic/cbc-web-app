@@ -92,6 +92,7 @@ struct ContentView: View {
     }
 
     private var headerView: some View {
+<<<<<<< HEAD
         VStack(spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
@@ -118,6 +119,19 @@ struct ContentView: View {
                 endPoint: .bottom
             )
         )
+=======
+        VStack(spacing: 8) {
+            Text("Christopher Celaya")
+                .font(.system(size: 34, weight: .bold, design: .default))
+                .foregroundColor(.white)
+
+            PulsingStatusView()
+        }
+        .padding(.top, 60)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity)
+        .background(Color(hex: "0A0A0A"))
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
     }
 }
 
@@ -125,6 +139,7 @@ struct PulsingStatusView: View {
     @State private var isPulsing = false
 
     var body: some View {
+<<<<<<< HEAD
         HStack(spacing: 10) {
             ZStack {
                 Circle()
@@ -143,11 +158,28 @@ struct PulsingStatusView: View {
                 .font(.system(size: 13, weight: .regular, design: .default))
                 .foregroundColor(Color(hex: "B0B0B0"))
                 .tracking(0.2)
+=======
+        HStack(spacing: 8) {
+            Circle()
+                .fill(Color(hex: "0066FF"))
+                .frame(width: 8, height: 8)
+                .scaleEffect(isPulsing ? 1.2 : 1.0)
+                .opacity(isPulsing ? 1.0 : 0.6)
+                .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isPulsing)
+
+            Text("Currently: Building CLOS cognitive optimization systems")
+                .font(.subheadline)
+                .foregroundColor(Color(hex: "A0A0A0"))
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
         }
         .onAppear {
             isPulsing = true
         }
+<<<<<<< HEAD
         .drawingGroup()
+=======
+        .drawingGroup() // Optimize rendering
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
     }
 }
 

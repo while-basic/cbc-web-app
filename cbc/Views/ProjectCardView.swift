@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //----------------------------------------------------------------------------
 //File:       ProjectCardView.swift
 //Project:     cbc
@@ -8,6 +9,14 @@
 //License:     MIT
 //Last Update: November 2025
 //----------------------------------------------------------------------------
+=======
+//
+//  ProjectCardView.swift
+//  cbc
+//
+//  Created by Christopher Celaya on 12/25/25.
+//
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
 
 import SwiftUI
 
@@ -15,6 +24,7 @@ struct ProjectCardView: View {
     let project: Project
 
     var body: some View {
+<<<<<<< HEAD
         VStack(alignment: .leading, spacing: 16) {
             // Header with title and status
             HStack(alignment: .top) {
@@ -40,10 +50,36 @@ struct ProjectCardView: View {
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
 
+=======
+        VStack(alignment: .leading, spacing: 12) {
+            Text(project.name)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+
+            Text(project.description)
+                .font(.body)
+                .foregroundColor(Color(hex: "A0A0A0"))
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack {
+                Text(project.status)
+                    .font(.caption)
+                    .foregroundColor(Color(hex: "0066FF"))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(hex: "0066FF").opacity(0.2))
+                    .cornerRadius(4)
+
+                Spacer()
+            }
+
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
             // Tech tags
             FlowLayout(spacing: 8) {
                 ForEach(project.tech, id: \.self) { tech in
                     Text(tech)
+<<<<<<< HEAD
                         .font(.system(size: 11, weight: .regular, design: .monospaced))
                         .foregroundColor(Color(hex: "808080"))
                         .padding(.horizontal, 10)
@@ -88,6 +124,25 @@ struct ProjectCardView: View {
                 )
         )
         .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 4)
+=======
+                        .font(.caption2)
+                        .foregroundColor(Color(hex: "A0A0A0"))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color(hex: "1A1A1A"))
+                        .cornerRadius(3)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3)
+                                .stroke(Color(hex: "A0A0A0").opacity(0.3), lineWidth: 0.5)
+                        )
+                }
+            }
+        }
+        .padding(24)
+        .background(Color(hex: "1A1A1A"))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 2)
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
     }
 }
 

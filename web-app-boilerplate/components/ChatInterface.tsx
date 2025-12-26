@@ -165,6 +165,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
                   ${isActive ? 'opacity-100' : 'opacity-10 hover:opacity-30'}
                 `}
               >
+<<<<<<< HEAD
                 <div className={`max-w-[75%] md:max-w-[65%] ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
                   <div className={`rounded-3xl px-6 py-4 shadow-2xl ${
                     m.role === 'user' 
@@ -176,6 +177,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
                     } leading-relaxed selection:bg-white/10`}>
                       <ReactMarkdown>{m.text}</ReactMarkdown>
                     </div>
+=======
+                <div className={`max-w-[90%] md:max-w-[80%] ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
+                  <div className="prose prose-invert prose-sm font-light leading-relaxed text-white/80 selection:bg-white/10">
+                    <ReactMarkdown>{m.text}</ReactMarkdown>
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
                   </div>
                   
                   {isActive && m.cards && m.cards.length > 0 && (
@@ -193,12 +199,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
           })}
           
           {isLoading && (
+<<<<<<< HEAD
             <div className="flex items-center space-x-3 py-4 pl-8">
               <div className="flex space-x-2 bg-[#151515] border border-[#2A2A2A] rounded-2xl px-5 py-3 shadow-lg">
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-bounce [animation-delay:-0.15s]" />
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-bounce" />
               </div>
+=======
+            <div className="flex items-center space-x-2 animate-pulse py-4">
+              <div className="w-1 h-1 bg-white/20 rounded-full" />
+              <div className="w-1 h-1 bg-white/20 rounded-full" />
+              <div className="w-1 h-1 bg-white/20 rounded-full" />
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
             </div>
           )}
           
@@ -206,6 +219,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
         </div>
       </div>
 
+<<<<<<< HEAD
       <div className="bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent pb-16 pt-6 relative z-10 border-t-2 border-[#2A2A2A]/60">
         <form onSubmit={handleSubmit} className="relative group max-w-2xl mx-auto px-6">
           <div className="flex items-center gap-4">
@@ -232,6 +246,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
                 <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               )}
             </button>
+=======
+      <div className="bg-[#0A0A0A] pb-12 pt-4 relative z-10 border-t border-white/[0.03]">
+        <form onSubmit={handleSubmit} className="relative group">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={isLoading}
+            placeholder={userId ? "Reflect..." : "Connect identity to engage..."}
+            className="w-full bg-transparent border-none py-4 text-sm font-light tracking-wide text-white focus:outline-none transition-all placeholder:text-white/[0.05] disabled:opacity-50"
+          />
+          <div className={`absolute right-0 bottom-4 transition-opacity duration-500 ${input.length > 0 ? 'opacity-100' : 'opacity-0'}`}>
+            <span className="text-[9px] uppercase tracking-[0.3em] text-white/20 font-bold">
+              Return
+            </span>
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
           </div>
         </form>
       </div>

@@ -91,7 +91,11 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div className="flex flex-col h-full max-w-2xl mx-auto w-full px-5 relative">
+=======
+    <div className="flex flex-col h-full max-w-2xl mx-auto w-full px-6 relative">
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
       {/* Reset Session Control */}
       {messages.length > 0 && (
         <button 
@@ -106,7 +110,11 @@ const ChatInterface: React.FC = () => {
         ref={scrollRef}
         className="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-48 pt-[35vh]"
       >
+<<<<<<< HEAD
         <div className="space-y-20">
+=======
+        <div className="space-y-16">
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
           {messages.length === 0 && (
             <div className="animate-in fade-in duration-1000">
                <div className="text-white/20 text-sm font-light italic pl-8 border-l border-white/5 tracking-tight">
@@ -116,6 +124,7 @@ const ChatInterface: React.FC = () => {
           )}
           
           {messages.map((message) => (
+<<<<<<< HEAD
             <div key={message.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-6">
               <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] md:max-w-[65%] ${
@@ -128,11 +137,25 @@ const ChatInterface: React.FC = () => {
                   } tracking-normal`}>
                     {message.text}
                   </div>
+=======
+            <div key={message.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className={`text-base leading-relaxed ${
+                message.role === 'user' 
+                  ? 'text-white/90 font-medium' 
+                  : 'text-white/75 pl-8 border-l border-white/5 italic'
+              }`}>
+                <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap font-light tracking-wide">
+                  {message.text}
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
                 </div>
               </div>
 
               {message.cards && message.cards.length > 0 && (
+<<<<<<< HEAD
                 <div className="w-full mt-4">
+=======
+                <div className="w-full">
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
                   {message.cards.map((card, i) => {
                     if (card.type === 'project') {
                       return <ProjectCard key={i} project={card.content} />;
@@ -145,18 +168,26 @@ const ChatInterface: React.FC = () => {
           ))}
 
           {isTyping && (
+<<<<<<< HEAD
             <div className="flex items-center space-x-3 pl-8 py-4">
               <div className="flex space-x-2 bg-[#151515] border border-[#2A2A2A] rounded-2xl px-5 py-3 shadow-lg">
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-bounce [animation-delay:-0.15s]" />
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-bounce" />
               </div>
+=======
+            <div className="flex items-center space-x-1.5 pl-8 py-2 opacity-30">
+              <div className="w-1 h-1 bg-white rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <div className="w-1 h-1 bg-white rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
             </div>
           )}
         </div>
       </div>
 
       {/* Floating Input Area */}
+<<<<<<< HEAD
       <div className="fixed bottom-0 left-0 right-0 h-48 pointer-events-none bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent">
         <div className="max-w-2xl mx-auto px-6 h-full flex items-center justify-center">
           <div className="w-full border-t-2 border-[#2A2A2A]/60">
@@ -202,6 +233,24 @@ const ChatInterface: React.FC = () => {
               </button>
             </form>
           </div>
+=======
+      <div className="fixed bottom-0 left-0 right-0 h-40 pointer-events-none bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent">
+        <div className="max-w-2xl mx-auto px-6 h-full flex items-center justify-center">
+          <form 
+            onSubmit={handleSubmit}
+            className="w-full flex items-center pointer-events-auto"
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask something real."
+              autoFocus
+              className="w-full bg-transparent border-none py-6 text-lg font-light focus:outline-none focus:ring-0 text-white placeholder-white/10 caret-white"
+            />
+          </form>
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
         </div>
       </div>
     </div>

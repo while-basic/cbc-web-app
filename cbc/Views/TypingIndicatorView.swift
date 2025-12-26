@@ -16,6 +16,7 @@ struct TypingIndicatorView: View {
     @State private var timer: Timer?
     
     var body: some View {
+<<<<<<< HEAD
         HStack(spacing: 6) {
             ForEach(0..<3) { index in
                 Circle()
@@ -41,6 +42,24 @@ struct TypingIndicatorView: View {
                 withAnimation {
                     currentIndex = (currentIndex + 1) % 3
                 }
+=======
+        HStack(spacing: 4) {
+            ForEach(0..<3) { index in
+                Circle()
+                    .fill(Color(hex: "A0A0A0"))
+                    .frame(width: 8, height: 8)
+                    .opacity(currentIndex == index ? 1.0 : 0.3)
+                    .animation(.easeInOut(duration: 0.3), value: currentIndex)
+            }
+        }
+        .padding(16)
+        .background(Color(hex: "1A1A1A"))
+        .cornerRadius(16)
+        .onAppear {
+            // Use Timer for more efficient animation control
+            timer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { _ in
+                currentIndex = (currentIndex + 1) % 3
+>>>>>>> c5852787698c13ce07da0d9357cc236b6527617f
             }
         }
         .onDisappear {
