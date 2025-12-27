@@ -1,13 +1,25 @@
-
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "../constants";
+import CLAUDE_FUNCTIONS from "../knowledgebase/claude_functions.json";
 
-export const sendMessageToPortal = async (message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[]) => {
+/**
+ * Sends a message to the Christopher Celaya Portal using Claude AI
+ * Implements function calling for rich UI components (project cards, media embeds, etc.)
+ *
+ * @param message - The user's message text
+ * @param history - Conversation history in Gemini format (for backward compatibility)
+ * @returns Response object with text and optional card data
+ */
+export const sendMessageToPortal = async (
+  message: string,
+  history: { role: 'user' | 'model', parts: { text: string }[] }[]
+) => {
   const anthropic = new Anthropic({
     apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
     dangerouslyAllowBrowser: true
   });
 
+  // Check for Notion integration and augment system prompt if configured
   const savedNotion = localStorage.getItem('portal_notion_config');
   let augmentedPrompt = SYSTEM_PROMPT;
 
@@ -20,7 +32,7 @@ export const sendMessageToPortal = async (message: string, history: { role: 'use
 The mirror is extended. Reflect with awareness of his broader intellectual architecture.`;
       }
     } catch (e) {
-      // Silent failure
+      console.warn('Failed to parse Notion config:', e);
     }
   }
 
@@ -31,26 +43,70 @@ The mirror is extended. Reflect with awareness of his broader intellectual archi
       content: h.parts.map(p => p.text).join('\n')
     }));
 
+    // Convert function definitions to Anthropic tools format
+    const tools = CLAUDE_FUNCTIONS.functions.map(fn => ({
+      name: fn.name,
+      description: fn.description,
+      input_schema: fn.parameters
+    }));
+
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-5-20250929",
       max_tokens: 8096,
       system: augmentedPrompt,
+      tools,
       messages: [
         ...claudeMessages,
         { role: 'user', content: message }
       ]
     });
 
-    // Extract text from response
-    const responseText = response.content[0].type === 'text'
-      ? response.content[0].text
-      : '{"text": "", "cards": []}';
+    // Process response - handle both text and tool use
+    let responseText = '';
+    const cards: any[] = [];
 
-    return JSON.parse(responseText.trim());
-  } catch (error) {
-    console.error("Portal flicker:", error);
+    for (const block of response.content) {
+      if (block.type === 'text') {
+        responseText += block.text;
+      } else if (block.type === 'tool_use') {
+        // Convert tool calls to card format
+        const toolName = block.name;
+        const toolInput = block.input;
+
+        // Map function calls to card types
+        const cardTypeMap: Record<string, string> = {
+          'render_project_card': 'project',
+          'render_media_embed': 'media',
+          'render_bio_card': 'bio',
+          'render_project_list': 'project_list',
+          'render_action_button': 'action',
+          'render_philosophy_explanation': 'philosophy'
+        };
+
+        const cardType = cardTypeMap[toolName];
+        if (cardType) {
+          cards.push({
+            type: cardType,
+            content: toolInput
+          });
+        }
+      }
+    }
+
     return {
-      text: "The connection is tenuous.",
+      text: responseText || '',
+      cards
+    };
+  } catch (error) {
+    console.error("Portal connection error:", error);
+
+    // Provide more detailed error information in development
+    if (import.meta.env.DEV) {
+      console.error("Full error details:", error);
+    }
+
+    return {
+      text: "The connection is tenuous. The portal flickers.",
       cards: []
     };
   }
