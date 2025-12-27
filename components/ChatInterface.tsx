@@ -1,9 +1,28 @@
+/**
+ * ChatInterface Component
+ *
+ * Core conversational interface for the Christopher Celaya Portal
+ * Implements a branching conversation tree with message threading
+ * and persistent localStorage-based history per user session.
+ *
+ * Key Features:
+ * - Branching conversation threads (messages have parent/child relationships)
+ * - Active path highlighting (only messages in current thread are fully visible)
+ * - Session persistence (conversations saved per userId in localStorage)
+ * - Integration with Claude AI via Anthropic SDK
+ * - Support for rich UI cards (project cards, media embeds, etc.)
+ */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ChatMessage } from '../types';
+import { ChatMessage, ProjectCard as ProjectCardType, MediaCard as MediaCardType, BioCard as BioCardType, ProjectListCard as ProjectListCardType, ActionCard as ActionCardType, PhilosophyCard as PhilosophyCardType } from '../types';
 import { sendMessageToPortal } from '../services/claudeService';
 import ProjectCard from './ProjectCard';
+import MediaCard from './MediaCard';
+import BioCard from './BioCard';
+import ProjectListCard from './ProjectListCard';
+import ActionButton from './ActionButton';
+import PhilosophyCard from './PhilosophyCard';
 
 const STORAGE_HISTORY_PREFIX = 'portal_history_';
 
@@ -20,7 +39,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onConnectIdentity
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize or restore session history
+  /**
+   * Initialize or restore session history from localStorage
+   * Creates initial greeting messages on first load or restores previous conversation
+   */
   useEffect(() => {
     if (userId) {
       const saved = localStorage.getItem(`${STORAGE_HISTORY_PREFIX}${userId}`);
@@ -79,14 +101,21 @@ Where would you like to begin?`,
     }
   }, [userId]);
 
-  // Persist message state
+  /**
+   * Persist message state to localStorage whenever messages change
+   * Enables conversation continuity across page reloads
+   */
   useEffect(() => {
     if (userId && messages.length > 0) {
       localStorage.setItem(`${STORAGE_HISTORY_PREFIX}${userId}`, JSON.stringify(messages));
     }
   }, [messages, userId]);
 
-  // Compute the active path from root to current anchor
+  /**
+   * Compute the active path from root to current anchor message
+   * This creates the "conversation thread" effect where only messages
+   * in the current branch are fully visible
+   */
   const activePathIds = useMemo(() => {
     if (!activeMessageId) return new Set<string>();
     const path = new Set<string>();
@@ -99,7 +128,11 @@ Where would you like to begin?`,
     return path;
   }, [activeMessageId, messages]);
 
-  // Construct conversation context for Gemini based on the active path
+  /**
+   * Construct conversation context based on the active path
+   * Traces back from current message to root to build conversation history
+   * Returns messages in chronological order for API context
+   */
   const getContextHistory = (currentActiveId: string | null) => {
     if (!currentActiveId) return [];
     const path: ChatMessage[] = [];
@@ -178,9 +211,12 @@ Where would you like to begin?`,
 
   return (
     <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 md:px-6 relative">
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto pt-36 md:pt-44 pb-24 no-scrollbar"
+        role="log"
+        aria-live="polite"
+        aria-label="Conversation history"
       >
         <div className="space-y-8">
           {messages.map((m) => {
@@ -215,10 +251,19 @@ Where would you like to begin?`,
             }
             
             return (
-              <div 
-                key={m.id} 
+              <div
+                key={m.id}
                 onClick={() => setActiveMessageId(m.id)}
-                className={`flex flex-col transition-all duration-500 cursor-pointer group 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setActiveMessageId(m.id);
+                  }
+                }}
+                role="button"
+                tabIndex={isActive ? 0 : -1}
+                aria-label={`${m.role === 'user' ? 'Your message' : 'Assistant response'}: ${m.text.substring(0, 50)}...`}
+                className={`flex flex-col transition-all duration-500 cursor-pointer group
                   ${m.role === 'user' ? 'items-end' : 'items-start'}
                   ${isActive ? 'opacity-100' : 'opacity-20 hover:opacity-40'}
                 `}
@@ -238,11 +283,24 @@ Where would you like to begin?`,
                   
                   {isActive && m.cards && m.cards.length > 0 && (
                     <div className="mt-6 space-y-4 w-full md:w-80">
-                      {m.cards.map((card, i) => (
-                        card.type === 'project' ? (
-                          <ProjectCard key={i} project={card.content} />
-                        ) : null
-                      ))}
+                      {m.cards.map((card, i) => {
+                        switch (card.type) {
+                          case 'project':
+                            return <ProjectCard key={i} project={card.content as ProjectCardType} />;
+                          case 'media':
+                            return <MediaCard key={i} media={card.content as MediaCardType} />;
+                          case 'bio':
+                            return <BioCard key={i} bio={card.content as BioCardType} />;
+                          case 'project_list':
+                            return <ProjectListCard key={i} projectList={card.content as ProjectListCardType} />;
+                          case 'action':
+                            return <ActionButton key={i} action={card.content as ActionCardType} />;
+                          case 'philosophy':
+                            return <PhilosophyCard key={i} philosophy={card.content as PhilosophyCardType} />;
+                          default:
+                            return null;
+                        }
+                      })}
                     </div>
                   )}
                 </div>
@@ -275,26 +333,37 @@ Where would you like to begin?`,
       </div>
 
       <div className="bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent pb-8 pt-4 relative z-10">
-        <form onSubmit={handleSubmit} className="relative group max-w-2xl mx-auto">
+        <form onSubmit={handleSubmit} className="relative group max-w-2xl mx-auto" aria-label="Message input form">
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
+              <label htmlFor="message-input" className="sr-only">
+                {userId ? "Enter your message" : "Connect identity to engage"}
+              </label>
               <input
+                id="message-input"
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
                 placeholder={userId ? "" : "Connect identity to engage..."}
+                aria-describedby={isLoading ? "loading-status" : undefined}
                 className="w-full bg-transparent border-b border-white/10 focus:border-white/30 px-2 py-3 text-sm font-light focus:outline-none text-white placeholder-white/20 caret-white/50 transition-all disabled:opacity-50"
               />
             </div>
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
+              aria-label="Send message"
               className="text-white/40 hover:text-white/60 disabled:opacity-20 transition-all text-sm font-light disabled:cursor-not-allowed"
             >
               →
             </button>
           </div>
+          {isLoading && (
+            <span id="loading-status" className="sr-only" role="status">
+              Processing your message...
+            </span>
+          )}
         </form>
       </div>
     </div>
